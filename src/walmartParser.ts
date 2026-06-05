@@ -61,12 +61,14 @@ export function parseWalmartText(raw: string): ParseResult {
     const m = text.match(re);
     return m ? Number(m[1].replace(/,/g, '')) : null;
   };
-  // Labels and their right-aligned values often land on separate OCR lines, so
-  // allow a short gap (including newlines) between the label and its "$" amount.
-  const subtotal = money(/Subtotal[^$]{0,60}\$\s*([\d,]+\.\d{2})/i);
-  const shippingFee = money(/Shipping\s*fee[^$]{0,60}\$\s*([\d,]+\.\d{2})/i);
-  const taxes = money(/Tax(?:es)?[^$]{0,60}\$\s*([\d,]+\.\d{2})/i);
-  const total = money(/\bTotal[^$]{0,60}\$\s*([\d,]+\.\d{2})/i);
+  // Match each total's "$" value on the SAME line as its label. Crossing
+  // newlines is unsafe: when OCR drops the "$" on one line (e.g. a $0.00
+  // shipping fee), a cross-line match would grab the next line's amount and
+  // corrupt the computed sales price.
+  const subtotal = money(/Subtotal[^$\n]{0,40}\$\s*([\d,]+\.\d{2})/i);
+  const shippingFee = money(/Shipping\s*fee[^$\n]{0,40}\$\s*([\d,]+\.\d{2})/i);
+  const taxes = money(/Tax(?:es)?[^$\n]{0,40}\$\s*([\d,]+\.\d{2})/i);
+  const total = money(/\bTotal[^$\n]{0,40}\$\s*([\d,]+\.\d{2})/i);
 
   // Quantity: prefer "Subtotal (1 item)", fall back to "x1".
   let qty = 1;
@@ -128,6 +130,20 @@ export function parseWalmartText(raw: string): ParseResult {
   if (!title) {
     const candidates = lines.slice(0, 14).filter(looksLikeTitle);
     if (candidates.length) title = candidates.sort((a, b) => b.length - a.length)[0];
+  }
+
+  // OCR often bleeds the right-hand column (status, "x1", "Ship node: … - MP")
+  // onto the title line. Trim the title at the first such marker.
+  if (title) {
+    title = title
+      .replace(
+        /\s+(?:Delivered|Shipped|Shipping|Pending|Acknowledged|Returned|Cancelled|Refunded?|Ship\s*node|Ship\s*method|Carrier|Tracking|Order|PO#).*$/i,
+        ''
+      )
+      .replace(/\s+x\s?\d+\b.*$/i, '') // "x1 …"
+      .replace(/\s*[-–—]\s*\d{4,}.*$/, '') // " - 10001467995 …"
+      .replace(/[\s.;,–—-]+$/, '') // trailing punctuation
+      .trim();
   }
 
   const descParts: string[] = [];
