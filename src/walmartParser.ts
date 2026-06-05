@@ -61,9 +61,12 @@ export function parseWalmartText(raw: string): ParseResult {
     const m = text.match(re);
     return m ? Number(m[1].replace(/,/g, '')) : null;
   };
-  const subtotal = money(/Subtotal[^$\n]*\$\s*([\d,]+\.\d{2})/i);
-  const shippingFee = money(/Shipping\s*fee\s*:?[^$\n]*\$\s*([\d,]+\.\d{2})/i);
-  const taxes = money(/Tax(?:es)?[^$\n]*\$\s*([\d,]+\.\d{2})/i);
+  // Labels and their right-aligned values often land on separate OCR lines, so
+  // allow a short gap (including newlines) between the label and its "$" amount.
+  const subtotal = money(/Subtotal[^$]{0,60}\$\s*([\d,]+\.\d{2})/i);
+  const shippingFee = money(/Shipping\s*fee[^$]{0,60}\$\s*([\d,]+\.\d{2})/i);
+  const taxes = money(/Tax(?:es)?[^$]{0,60}\$\s*([\d,]+\.\d{2})/i);
+  const total = money(/\bTotal[^$]{0,60}\$\s*([\d,]+\.\d{2})/i);
 
   // Quantity: prefer "Subtotal (1 item)", fall back to "x1".
   let qty = 1;
@@ -73,10 +76,20 @@ export function parseWalmartText(raw: string): ParseResult {
   else if (qtyX) qty = Number(qtyX[1]);
   set('quantity', qty, 'Quantity');
 
-  if (subtotal != null) {
-    const unit = qty > 0 ? subtotal / qty : subtotal;
-    set('unitPrice', Number(unit.toFixed(2)), 'Unit Price');
-  }
+  // The per-item sold price is shown in the item block, ABOVE the order totals.
+  // Take the first "$" amount before the totals section (so we don't grab the
+  // subtotal/total), then fall back to deriving it from the totals if needed.
+  const totalsAt = text.search(/Subtotal|Grand\s*total|Order\s*total|\bTotal\b/i);
+  const itemRegion = totalsAt >= 0 ? text.slice(0, totalsAt) : text;
+  const itemPriceMatch = itemRegion.match(/\$\s*([\d,]+\.\d{2})/);
+  const itemPrice = itemPriceMatch ? Number(itemPriceMatch[1].replace(/,/g, '')) : null;
+
+  let unitPrice: number | null = null;
+  if (itemPrice != null) unitPrice = itemPrice;
+  else if (subtotal != null) unitPrice = qty > 0 ? subtotal / qty : subtotal;
+  else if (total != null) unitPrice = (total - (shippingFee || 0) - (taxes || 0)) / (qty || 1);
+  if (unitPrice != null) set('unitPrice', Number(unitPrice.toFixed(2)), 'Unit Price');
+
   if (shippingFee != null) set('shipping', shippingFee, 'Shipping Cost');
   if (taxes != null) set('tax', taxes, 'Tax');
 
@@ -84,27 +97,42 @@ export function parseWalmartText(raw: string): ParseResult {
   const condition = text.match(/Condition\s*:?\s*([A-Za-z]+)/i);
   const model = text.match(/\b([A-Z]{2,}[A-Z0-9]*\d[A-Z0-9]*)\b/); // e.g. UTSMT220
 
+  const isLabelLine = (l: string) =>
+    /^(Delivered|Shipped|Shipping|Ship|Order|PO|Carrier|Variant|Condition|Returned|Cancelled|Refund|Download|Print|Back to|Customer|Subtotal|Grand|Total|Tax|Fulfilled|Deliver|Tracking|Copy|Email|Amount|Qty|Rate|Item|Bill|Sold|Date)\b/i.test(
+      l
+    );
+
+  // Heuristic for "this line is the product/listing title".
+  const looksLikeTitle = (l: string) =>
+    l.length > 8 &&
+    /[A-Za-z]{3,}/.test(l) &&
+    l.trim().split(/\s+/).length >= 2 &&
+    !isLabelLine(l) &&
+    !/^[$\d]/.test(l) && // not a price/number
+    !/,\s*[A-Z]{2}\s*\d{5}/.test(l) && // not a city/state/zip
+    !/^[A-Z0-9][A-Z0-9-]{3,}$/.test(l); // not a bare SKU/code
+
+  // The product title sits just above the Variant/Condition/SKU details. Look
+  // in that window first; otherwise take the most title-like line near the top.
   let title = '';
-  const variantIdx = lines.findIndex((l) => /^Variant\s*:/i.test(l));
-  const anchorIdx = variantIdx >= 0 ? variantIdx : lines.findIndex((l) => /^Condition\s*:/i.test(l));
+  const anchorIdx = lines.findIndex((l) => /Variant\s*:|Condition\s*:/i.test(l));
   if (anchorIdx > 0) {
-    for (let i = anchorIdx - 1; i >= 0 && i >= anchorIdx - 3; i--) {
-      const l = lines[i];
-      if (
-        l.length > 8 &&
-        /[A-Za-z]{3,}/.test(l) &&
-        !/^(Delivered|Shipping|Order|PO|Carrier|Variant|Condition|Returned|Cancelled)/i.test(l)
-      ) {
-        title = l;
+    for (let i = anchorIdx - 1; i >= 0 && i >= anchorIdx - 4; i--) {
+      if (looksLikeTitle(lines[i])) {
+        title = lines[i];
         break;
       }
     }
+  }
+  if (!title) {
+    const candidates = lines.slice(0, 14).filter(looksLikeTitle);
+    if (candidates.length) title = candidates.sort((a, b) => b.length - a.length)[0];
   }
 
   const descParts: string[] = [];
   if (title) descParts.push(title);
   const sub: string[] = [];
-  if (model) sub.push(model[1]);
+  if (model && (!title || !title.includes(model[1]))) sub.push(model[1]);
   if (condition) sub.push(`Condition: ${capitalize(condition[1])}`);
   if (sub.length) descParts.push(sub.join(' | '));
   if (descParts.length) set('itemDescription', descParts.join('\n'), 'Item Description');
