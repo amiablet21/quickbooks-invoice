@@ -44,19 +44,38 @@ function createWindow() {
 
 // ---------------------------------------------------------------------------
 // Offline OCR: the renderer sends an image data URL, we run Tesseract here in
-// the Node main process (no network, no CORS issues) and return the raw text.
-// The English model is bundled at electron/tessdata/eng.traineddata.gz.
+// the Node main process (no network) and return the raw text.
+//
+// The English model ships gzipped at electron/tessdata/eng.traineddata.gz.
+// Inside packaged Electron, tesseract.js detects the environment as "electron"
+// (not "node") and would try to fetch() the model over a relative URL — which
+// fails ("Only absolute URLs are supported"). To avoid that code path entirely
+// we gunzip the model into the app's user-data folder once and point Tesseract
+// at it as a pre-populated CACHE, which it always reads with plain Node fs.
 // ---------------------------------------------------------------------------
 let ocrWorkerPromise = null;
+
+function ensureLangCache() {
+  const fs = require('fs');
+  const zlib = require('zlib');
+  const cacheDir = path.join(app.getPath('userData'), 'tessdata');
+  const out = path.join(cacheDir, 'eng.traineddata');
+  if (!fs.existsSync(out)) {
+    fs.mkdirSync(cacheDir, { recursive: true });
+    const gz = fs.readFileSync(path.join(__dirname, 'tessdata', 'eng.traineddata.gz'));
+    fs.writeFileSync(out, zlib.gunzipSync(gz));
+  }
+  return cacheDir;
+}
 
 function getOcrWorker() {
   if (!ocrWorkerPromise) {
     const { createWorker } = require('tesseract.js');
-    const langPath = path.join(__dirname, 'tessdata');
+    const cachePath = ensureLangCache();
     ocrWorkerPromise = createWorker('eng', 1, {
-      langPath,
-      gzip: true,
-      cacheMethod: 'none',
+      cachePath,
+      cacheMethod: 'readOnly', // read the pre-populated cache; never fetch or write
+      gzip: false,
       logger: () => {},
     }).catch((err) => {
       ocrWorkerPromise = null; // allow a retry on the next call
