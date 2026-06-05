@@ -33,6 +33,11 @@ body {
     margin: 0.5in;
   }
 
+  /* Always print the document at full 1:1 size, ignoring on-screen scaling. */
+  .preview-zoom {
+    zoom: 1 !important;
+  }
+
   .invoice-sheet {
     box-shadow: none !important;
     border: 0 !important;

@@ -14,11 +14,19 @@ function createWindow() {
     backgroundColor: '#f5f5f4',
     title: 'Invoice Studio',
     autoHideMenuBar: true,
+    show: false, // avoid a white flash; reveal once ready
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
     },
+  });
+
+  // Start maximized so the editor + preview show side-by-side, but keep a
+  // sensible 1280x860 restore size for when the user un-maximizes.
+  win.once('ready-to-show', () => {
+    win.maximize();
+    win.show();
   });
 
   // Open external links in the system browser, not inside the app window.

@@ -1,10 +1,46 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef, useLayoutEffect } from 'react';
 import { Printer, Save, Check } from 'lucide-react';
 import { InvoiceData, createBlankInvoice } from './types';
 import { loadInvoices, saveInvoice, deleteInvoice } from './storage';
 import Sidebar from './components/Sidebar';
 import InvoiceEditor from './components/InvoiceEditor';
 import InvoicePreview from './components/InvoicePreview';
+
+// The invoice document is laid out at a fixed paper width. In a narrow window
+// we scale the whole sheet down to fit the pane (Chromium `zoom`), so the full
+// invoice is always visible without a horizontal scrollbar. Print resets to 1:1.
+const SHEET_WIDTH = 816;
+
+function PreviewPane({ invoice }: { invoice: InvoiceData }) {
+  const paneRef = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(1);
+
+  useLayoutEffect(() => {
+    const el = paneRef.current;
+    if (!el) return;
+    const update = () => {
+      const styles = getComputedStyle(el);
+      const padding = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+      const avail = el.clientWidth - padding;
+      setZoom(Math.min(1, avail / SHEET_WIDTH));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={paneRef}
+      className="overflow-y-auto bg-stone-100 print:bg-white px-6 py-8 print:p-0"
+    >
+      <div className="preview-zoom" style={{ zoom }}>
+        <InvoicePreview invoice={invoice} />
+      </div>
+    </div>
+  );
+}
 
 function App() {
   const [invoices, setInvoices] = useState<InvoiceData[]>(() => loadInvoices());
@@ -120,14 +156,14 @@ function App() {
           </div>
         </header>
 
-        {/* Content: editor + preview */}
-        <div className="flex-1 min-h-0 grid grid-cols-1 xl:grid-cols-[440px_1fr]">
+        {/* Content: editor + preview. Side-by-side from ~800px up (the window's
+            min width is 900), so a normal window keeps the preview beside the
+            editor instead of stacking it far below. */}
+        <div className="flex-1 min-h-0 grid grid-cols-1 min-[800px]:grid-cols-[minmax(360px,420px)_1fr]">
           <div className="print:hidden overflow-y-auto border-r border-stone-200 bg-white px-6 py-6">
             <InvoiceEditor invoice={current} onChange={update} />
           </div>
-          <div className="overflow-y-auto bg-stone-100 print:bg-white px-6 py-8 print:p-0">
-            <InvoicePreview invoice={current} />
-          </div>
+          <PreviewPane invoice={current} />
         </div>
       </main>
     </div>
