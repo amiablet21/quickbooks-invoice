@@ -13,6 +13,7 @@ function createWindow() {
     minHeight: 600,
     backgroundColor: '#f5f5f4',
     title: 'Invoice Studio',
+    icon: path.join(__dirname, 'icon.ico'),
     autoHideMenuBar: true,
     show: false, // avoid a white flash; reveal once ready
     webPreferences: {
