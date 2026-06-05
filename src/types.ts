@@ -77,6 +77,24 @@ export function createBlankInvoice(): InvoiceData {
   };
 }
 
+export interface VendorProfile {
+  vendorName: string;
+  vendorAddress: string;
+  vendorCity: string;
+  vendorPhone: string;
+  vendorEmail: string;
+}
+
+export function extractVendor(invoice: InvoiceData): VendorProfile {
+  return {
+    vendorName: invoice.vendorName,
+    vendorAddress: invoice.vendorAddress,
+    vendorCity: invoice.vendorCity,
+    vendorPhone: invoice.vendorPhone,
+    vendorEmail: invoice.vendorEmail,
+  };
+}
+
 export function computeTotals(invoice: InvoiceData) {
   const amount = invoice.quantity * invoice.unitPrice;
   const subtotal = amount;

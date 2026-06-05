@@ -1,3 +1,4 @@
+import { Check, Star } from 'lucide-react';
 import { InvoiceData, computeTotals } from '../types';
 import { TextField, NumberField, TextAreaField, ReadOnlyField } from './Field';
 import ScreenshotImport from './ScreenshotImport';
@@ -5,20 +6,36 @@ import ScreenshotImport from './ScreenshotImport';
 interface InvoiceEditorProps {
   invoice: InvoiceData;
   onChange: (patch: Partial<InvoiceData>) => void;
+  onSaveVendorDefault: () => void;
+  vendorSaved: boolean;
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  action,
+  children,
+}: {
+  title: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <section className="border-t border-stone-200 pt-6">
-      <h3 className="text-xs font-semibold uppercase tracking-widest text-stone-400 mb-4">
-        {title}
-      </h3>
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-stone-400">{title}</h3>
+        {action}
+      </div>
       {children}
     </section>
   );
 }
 
-export default function InvoiceEditor({ invoice, onChange }: InvoiceEditorProps) {
+export default function InvoiceEditor({
+  invoice,
+  onChange,
+  onSaveVendorDefault,
+  vendorSaved,
+}: InvoiceEditorProps) {
   const { amount, total } = computeTotals(invoice);
 
   return (
@@ -51,7 +68,25 @@ export default function InvoiceEditor({ invoice, onChange }: InvoiceEditorProps)
         </div>
       </Section>
 
-      <Section title="From (Vendor)">
+      <Section
+        title="From (Vendor)"
+        action={
+          <button
+            type="button"
+            onClick={onSaveVendorDefault}
+            title="Save these vendor details as the default for every new invoice"
+            className={
+              'flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ' +
+              (vendorSaved
+                ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                : 'border-stone-300 text-stone-600 hover:bg-stone-50')
+            }
+          >
+            {vendorSaved ? <Check size={13} /> : <Star size={13} />}
+            {vendorSaved ? 'Saved as default' : 'Set as default'}
+          </button>
+        }
+      >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <TextField
             label="Vendor Name"

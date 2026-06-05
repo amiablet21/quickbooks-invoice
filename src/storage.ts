@@ -1,6 +1,27 @@
-import { InvoiceData } from './types';
+import { InvoiceData, VendorProfile } from './types';
 
 const STORAGE_KEY = 'invoices.v1';
+const VENDOR_KEY = 'vendorProfile.v1';
+
+// Browser/localStorage fallback for the default vendor profile. In the desktop
+// app the profile is stored via the main process (see preload `api`), which
+// persists it as a JSON file in the app's user-data folder.
+export function loadVendorProfileLocal(): VendorProfile | null {
+  try {
+    const raw = localStorage.getItem(VENDOR_KEY);
+    return raw ? (JSON.parse(raw) as VendorProfile) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveVendorProfileLocal(profile: VendorProfile): void {
+  try {
+    localStorage.setItem(VENDOR_KEY, JSON.stringify(profile));
+  } catch {
+    /* ignore */
+  }
+}
 
 export function loadInvoices(): InvoiceData[] {
   try {

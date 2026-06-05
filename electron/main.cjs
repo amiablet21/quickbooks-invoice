@@ -85,6 +85,32 @@ function getOcrWorker() {
   return ocrWorkerPromise;
 }
 
+// Default vendor profile, persisted as JSON in the app's user-data folder so it
+// survives restarts (and app updates). The renderer reads it on launch to
+// pre-fill the "From (Vendor)" fields of every new invoice.
+function vendorProfilePath() {
+  return path.join(app.getPath('userData'), 'vendor-profile.json');
+}
+
+ipcMain.handle('vendor:get', () => {
+  try {
+    const fs = require('fs');
+    return JSON.parse(fs.readFileSync(vendorProfilePath(), 'utf8'));
+  } catch {
+    return null;
+  }
+});
+
+ipcMain.handle('vendor:set', (_event, profile) => {
+  try {
+    const fs = require('fs');
+    fs.writeFileSync(vendorProfilePath(), JSON.stringify(profile, null, 2));
+    return true;
+  } catch {
+    return false;
+  }
+});
+
 ipcMain.handle('ocr:scan', async (_event, dataUrl) => {
   try {
     if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) {

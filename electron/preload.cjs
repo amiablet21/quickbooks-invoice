@@ -5,6 +5,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('api', {
   isDesktop: true,
   scanImage: (dataUrl) => ipcRenderer.invoke('ocr:scan', dataUrl),
+  getVendorProfile: () => ipcRenderer.invoke('vendor:get'),
+  saveVendorProfile: (profile) => ipcRenderer.invoke('vendor:set', profile),
 });
 
 window.addEventListener('DOMContentLoaded', () => {

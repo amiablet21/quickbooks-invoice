@@ -1,7 +1,13 @@
 import { useEffect, useState, useCallback, useRef, useLayoutEffect } from 'react';
 import { Printer, Save, Check } from 'lucide-react';
-import { InvoiceData, createBlankInvoice } from './types';
-import { loadInvoices, saveInvoice, deleteInvoice } from './storage';
+import { InvoiceData, VendorProfile, createBlankInvoice, extractVendor } from './types';
+import {
+  loadInvoices,
+  saveInvoice,
+  deleteInvoice,
+  loadVendorProfileLocal,
+  saveVendorProfileLocal,
+} from './storage';
 import Sidebar from './components/Sidebar';
 import InvoiceEditor from './components/InvoiceEditor';
 import InvoicePreview from './components/InvoicePreview';
@@ -47,14 +53,48 @@ function App() {
   const [current, setCurrent] = useState<InvoiceData>(() => createBlankInvoice());
   const [dirty, setDirty] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
+  const [vendorProfile, setVendorProfile] = useState<VendorProfile | null>(null);
+  const [vendorSaved, setVendorSaved] = useState(false);
 
   const isSaved = invoices.some((i) => i.id === current.id);
+
+  // Load the saved default vendor on launch (desktop file, else localStorage)
+  // and pre-fill the current fresh invoice's vendor section with it.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const vp = window.api?.getVendorProfile
+        ? ((await window.api.getVendorProfile()) as VendorProfile | null)
+        : loadVendorProfileLocal();
+      if (!cancelled && vp && vp.vendorName) {
+        setVendorProfile(vp);
+        setCurrent((prev) => ({ ...prev, ...vp }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const newInvoice = useCallback((): InvoiceData => {
+    const inv = createBlankInvoice();
+    return vendorProfile ? { ...inv, ...vendorProfile } : inv;
+  }, [vendorProfile]);
 
   const update = useCallback((patch: Partial<InvoiceData>) => {
     setCurrent((prev) => ({ ...prev, ...patch }));
     setDirty(true);
     setJustSaved(false);
   }, []);
+
+  const handleSaveVendorDefault = useCallback(async () => {
+    const vp = extractVendor(current);
+    if (window.api?.saveVendorProfile) await window.api.saveVendorProfile(vp);
+    else saveVendorProfileLocal(vp);
+    setVendorProfile(vp);
+    setVendorSaved(true);
+    window.setTimeout(() => setVendorSaved(false), 2500);
+  }, [current]);
 
   const handleSave = useCallback(() => {
     setInvoices(saveInvoice(current));
@@ -69,10 +109,10 @@ function App() {
 
   const handleNew = useCallback(() => {
     if (!confirmDiscard()) return;
-    setCurrent(createBlankInvoice());
+    setCurrent(newInvoice());
     setDirty(false);
     setJustSaved(false);
-  }, [confirmDiscard]);
+  }, [confirmDiscard, newInvoice]);
 
   const handleSelect = useCallback(
     (id: string) => {
@@ -94,12 +134,12 @@ function App() {
       const next = deleteInvoice(id);
       setInvoices(next);
       if (id === current.id) {
-        setCurrent(createBlankInvoice());
+        setCurrent(newInvoice());
         setDirty(false);
         setJustSaved(false);
       }
     },
-    [current.id]
+    [current.id, newInvoice]
   );
 
   // Ctrl/Cmd+S to save
@@ -161,7 +201,12 @@ function App() {
             editor instead of stacking it far below. */}
         <div className="flex-1 min-h-0 grid grid-cols-1 min-[800px]:grid-cols-[minmax(360px,420px)_1fr]">
           <div className="print:hidden overflow-y-auto border-r border-stone-200 bg-white px-6 py-6">
-            <InvoiceEditor invoice={current} onChange={update} />
+            <InvoiceEditor
+              invoice={current}
+              onChange={update}
+              onSaveVendorDefault={handleSaveVendorDefault}
+              vendorSaved={vendorSaved}
+            />
           </div>
           <PreviewPane invoice={current} />
         </div>
