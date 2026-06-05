@@ -47,8 +47,6 @@ const expected: Record<string, unknown> = {
   tracking: 'UPS 1ZW1234X5678901234',
   quantity: 1,
   unitPrice: 120.96,
-  shipping: 0,
-  tax: 6.41,
   customerName: 'Jordan Example',
   customerAddress: '742 Sample Avenue',
   customerCity: 'Springfield, IL 62704',
@@ -66,7 +64,37 @@ for (const [key, want] of Object.entries(expected)) {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${key}: ${JSON.stringify(got)}${ok ? '' : `  (expected ${JSON.stringify(want)})`}`);
 }
 
+// Tax and shipping must NOT be imported (invoice shows only the sales price).
+const noTaxShip = patch.tax === undefined && patch.shipping === undefined;
+if (!noTaxShip) failures++;
+console.log(`${noTaxShip ? 'PASS' : 'FAIL'}  tax/shipping not imported (tax=${patch.tax}, shipping=${patch.shipping})`);
+
 console.log(`\nFilled fields (${filled.length}): ${filled.join(', ')}`);
+
+// Cropped layout: only the item block is visible (no Order details / totals).
+// Title and the circled sales price must still come through.
+const cropped = `Back to dashboard
+PO# 100000000000001
+Delivered
+ACME Wireless Earbuds Pro 2nd Gen, Noise Cancelling, White
+Variant: White
+ACMEWE220 Condition: New
+$120.96
+Shipping details
+Carrier / Tracking
+UPS 1ZW1234X5678901234`;
+const rc = parseWalmartText(cropped);
+const croppedOk =
+  rc.patch.unitPrice === 120.96 &&
+  rc.patch.itemDescription ===
+    'ACME Wireless Earbuds Pro 2nd Gen, Noise Cancelling, White\nACMEWE220 | Condition: New' &&
+  rc.patch.tracking === 'UPS 1ZW1234X5678901234' &&
+  rc.patch.tax === undefined &&
+  rc.patch.shipping === undefined;
+if (!croppedOk) failures++;
+console.log(
+  `${croppedOk ? 'PASS' : 'FAIL'}  cropped layout: price=${rc.patch.unitPrice}, desc=${JSON.stringify(rc.patch.itemDescription)}`
+);
 
 // Second case: quantity > 1 should divide the subtotal into a unit price.
 const multi = `PO# 999\nOrder#: 12345678\nUTSMT220 Condition: New\nVariant: Blue\nWidget Pro\nSubtotal (3 items) $90.00\nShipping fee: $5.00\nTaxes and other fees: $0.00\nTotal: $95.00`;

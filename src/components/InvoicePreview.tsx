@@ -125,10 +125,12 @@ export default function InvoicePreview({ invoice }: InvoicePreviewProps) {
               <span className="text-stone-500">Subtotal</span>
               <span className="text-stone-900">${money(subtotal)}</span>
             </div>
-            <div className="flex justify-between py-2 border-b border-stone-200">
-              <span className="text-stone-500">Shipping &amp; Handling</span>
-              <span className="text-stone-900">${money(invoice.shipping)}</span>
-            </div>
+            {invoice.shipping > 0 && (
+              <div className="flex justify-between py-2 border-b border-stone-200">
+                <span className="text-stone-500">Shipping &amp; Handling</span>
+                <span className="text-stone-900">${money(invoice.shipping)}</span>
+              </div>
+            )}
             {invoice.tax > 0 && (
               <div className="flex justify-between py-2 border-b border-stone-200">
                 <span className="text-stone-500">Tax &amp; Fees</span>

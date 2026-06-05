@@ -90,8 +90,9 @@ export function parseWalmartText(raw: string): ParseResult {
   else if (total != null) unitPrice = (total - (shippingFee || 0) - (taxes || 0)) / (qty || 1);
   if (unitPrice != null) set('unitPrice', Number(unitPrice.toFixed(2)), 'Unit Price');
 
-  if (shippingFee != null) set('shipping', shippingFee, 'Shipping Cost');
-  if (taxes != null) set('tax', taxes, 'Tax');
+  // Intentionally NOT importing shipping or tax — the invoice shows only the
+  // item's sales price. (subtotal/total above are used solely to derive the
+  // unit price when the item-line price can't be read.)
 
   // --- Item description ----------------------------------------------------
   const condition = text.match(/Condition\s*:?\s*([A-Za-z]+)/i);
