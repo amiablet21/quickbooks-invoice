@@ -9,7 +9,7 @@ Built with React + Vite + Tailwind, wrapped as a Windows desktop app with Electr
 ## Install the app (the easy way)
 
 1. Open the `release` folder.
-2. Run **`Invoice Studio Setup 1.1.0.exe`**.
+2. Run **`Invoice Studio Setup 1.2.0.exe`**.
 3. Follow the installer — it adds **Invoice Studio** to your Start menu and Desktop.
 4. Launch it like any other program.
 

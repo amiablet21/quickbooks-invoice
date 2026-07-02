@@ -30,6 +30,18 @@ function createWindow() {
     win.show();
   });
 
+  // Right-click menu so highlighted text / input fields get Cut-Copy-Paste.
+  win.webContents.on('context-menu', (_event, params) => {
+    const { editFlags } = params;
+    Menu.buildFromTemplate([
+      { role: 'cut', enabled: editFlags.canCut },
+      { role: 'copy', enabled: editFlags.canCopy },
+      { role: 'paste', enabled: editFlags.canPaste },
+      { type: 'separator' },
+      { role: 'selectAll', enabled: editFlags.canSelectAll },
+    ]).popup({ window: win });
+  });
+
   // Open external links in the system browser, not inside the app window.
   win.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
