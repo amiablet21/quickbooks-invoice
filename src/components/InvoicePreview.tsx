@@ -20,6 +20,7 @@ function MetaRow({ label, value }: { label: string; value: string }) {
 
 export default function InvoicePreview({ invoice }: InvoicePreviewProps) {
   const { amount, subtotal, total } = computeTotals(invoice);
+  const isCreditMemo = invoice.docType === 'credit-memo';
 
   return (
     <div
@@ -41,12 +42,25 @@ export default function InvoicePreview({ invoice }: InvoicePreviewProps) {
             </div>
           </div>
           <div className="text-right">
-            <h2 className="font-serif text-4xl tracking-[0.2em] text-stone-900 mb-4">
-              INVOICE
+            <h2
+              className={
+                'font-serif text-stone-900 mb-4 ' +
+                (isCreditMemo
+                  ? 'text-3xl tracking-[0.12em] whitespace-nowrap'
+                  : 'text-4xl tracking-[0.2em]')
+              }
+            >
+              {isCreditMemo ? 'CREDIT MEMO' : 'INVOICE'}
             </h2>
             <div className="text-[13px] min-w-[200px] border-t border-stone-300 pt-3">
-              <MetaRow label="Invoice #" value={invoice.invoiceNumber} />
+              <MetaRow
+                label={isCreditMemo ? 'Credit Memo #' : 'Invoice #'}
+                value={invoice.invoiceNumber}
+              />
               <MetaRow label="Date" value={invoice.invoiceDate} />
+              {isCreditMemo && (
+                <MetaRow label="Original Invoice #" value={invoice.relatedInvoiceNumber} />
+              )}
               <MetaRow label="PO #" value={invoice.poNumber} />
             </div>
           </div>
@@ -138,7 +152,9 @@ export default function InvoicePreview({ invoice }: InvoicePreviewProps) {
               </div>
             )}
             <div className="flex justify-between py-3 mt-1">
-              <span className="font-serif text-base text-stone-900">Total</span>
+              <span className="font-serif text-base text-stone-900">
+                {isCreditMemo ? 'Total Credit' : 'Total'}
+              </span>
               <span className="font-serif text-base text-stone-900">${money(total)}</span>
             </div>
           </div>

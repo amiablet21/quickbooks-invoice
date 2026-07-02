@@ -1,6 +1,12 @@
 import { useEffect, useState, useCallback, useRef, useLayoutEffect } from 'react';
-import { Printer, Save, Check } from 'lucide-react';
-import { InvoiceData, VendorProfile, createBlankInvoice, extractVendor } from './types';
+import { Printer, Save, Check, FileMinus } from 'lucide-react';
+import {
+  InvoiceData,
+  VendorProfile,
+  createBlankInvoice,
+  createCreditMemo,
+  extractVendor,
+} from './types';
 import {
   loadInvoices,
   saveInvoice,
@@ -107,6 +113,13 @@ function App() {
     return window.confirm('You have unsaved changes. Discard them?');
   }, [dirty]);
 
+  // Turn the invoice on screen into a new (unsaved) credit memo that credits it.
+  const handleCreditMemo = useCallback(() => {
+    setCurrent(createCreditMemo(current));
+    setDirty(true);
+    setJustSaved(false);
+  }, [current]);
+
   const handleNew = useCallback(() => {
     if (!confirmDiscard()) return;
     setCurrent(newInvoice());
@@ -175,10 +188,21 @@ function App() {
               {current.invoiceNumber || 'New Invoice'}
             </h1>
             <p className="text-xs text-stone-400">
+              {current.docType === 'credit-memo' && 'Credit memo · '}
               {isSaved ? (dirty ? 'Unsaved changes' : 'Saved') : 'Not saved yet'}
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {current.docType === 'invoice' && (
+              <button
+                onClick={handleCreditMemo}
+                title="Create a credit memo that credits this invoice"
+                className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-stone-700 border border-stone-300 rounded-md hover:bg-stone-50 transition-colors"
+              >
+                <FileMinus size={16} />
+                Credit Memo
+              </button>
+            )}
             <button
               onClick={() => window.print()}
               className="flex items-center gap-2 px-3.5 py-2 text-sm font-medium text-stone-700 border border-stone-300 rounded-md hover:bg-stone-50 transition-colors"

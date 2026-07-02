@@ -1,6 +1,12 @@
+export type DocType = 'invoice' | 'credit-memo';
+
 export interface InvoiceData {
   id: string;
+  docType: DocType;
+  /** Document number: INV-… for invoices, CM-… for credit memos. */
   invoiceNumber: string;
+  /** Credit memos only: the number of the invoice being credited. */
+  relatedInvoiceNumber: string;
   poNumber: string;
   orderNumber: string;
   invoiceDate: string;
@@ -46,7 +52,9 @@ export function createBlankInvoice(): InvoiceData {
   const randomNum = Math.floor(100000 + Math.random() * 900000);
   return {
     id: generateId(),
+    docType: 'invoice',
     invoiceNumber: `INV-${randomNum}`,
+    relatedInvoiceNumber: '',
     poNumber: '',
     orderNumber: '',
     invoiceDate: todayFormatted(),
@@ -73,6 +81,26 @@ export function createBlankInvoice(): InvoiceData {
     terms: 'Payment is due upon receipt.',
     notes: 'Thank you for your business!',
 
+    updatedAt: Date.now(),
+  };
+}
+
+/** CM number derived from the invoice it credits: INV-483920 → CM-483920. */
+export function creditMemoNumberFor(invoiceNumber: string): string {
+  const digits = invoiceNumber.replace(/\D/g, '');
+  return `CM-${digits || Math.floor(100000 + Math.random() * 900000)}`;
+}
+
+export function createCreditMemo(source: InvoiceData): InvoiceData {
+  return {
+    ...source,
+    id: generateId(),
+    docType: 'credit-memo',
+    invoiceNumber: creditMemoNumberFor(source.invoiceNumber),
+    relatedInvoiceNumber: source.invoiceNumber,
+    invoiceDate: todayFormatted(),
+    terms: 'Credit issued against the original invoice referenced above.',
+    notes: '',
     updatedAt: Date.now(),
   };
 }

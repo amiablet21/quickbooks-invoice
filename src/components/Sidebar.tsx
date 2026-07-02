@@ -77,6 +77,11 @@ export default function Sidebar({
                   <span className="text-sm font-medium text-stone-900 truncate">
                     {inv.invoiceNumber || 'Untitled'}
                   </span>
+                  {inv.docType === 'credit-memo' && (
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-700 bg-amber-50 border border-amber-200 rounded px-1 shrink-0">
+                      Credit
+                    </span>
+                  )}
                   {isActive && dirty && (
                     <span
                       title="Unsaved changes"

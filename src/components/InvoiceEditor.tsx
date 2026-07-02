@@ -37,24 +37,32 @@ export default function InvoiceEditor({
   vendorSaved,
 }: InvoiceEditorProps) {
   const { amount, total } = computeTotals(invoice);
+  const isCreditMemo = invoice.docType === 'credit-memo';
 
   return (
     <div className="space-y-6">
       <ScreenshotImport onApply={onChange} />
 
-      <Section title="Invoice">
+      <Section title={isCreditMemo ? 'Credit Memo' : 'Invoice'}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <TextField
-            label="Invoice Number"
+            label={isCreditMemo ? 'Credit Memo Number' : 'Invoice Number'}
             value={invoice.invoiceNumber}
             onChange={(v) => onChange({ invoiceNumber: v })}
           />
           <TextField
-            label="Invoice Date"
+            label={isCreditMemo ? 'Date' : 'Invoice Date'}
             value={invoice.invoiceDate}
             onChange={(v) => onChange({ invoiceDate: v })}
             placeholder="MM/DD/YYYY"
           />
+          {isCreditMemo && (
+            <TextField
+              label="Original Invoice #"
+              value={invoice.relatedInvoiceNumber}
+              onChange={(v) => onChange({ relatedInvoiceNumber: v })}
+            />
+          )}
           <TextField
             label="PO Number"
             value={invoice.poNumber}
@@ -187,7 +195,11 @@ export default function InvoiceEditor({
             step="0.01"
             onChange={(v) => onChange({ tax: v })}
           />
-          <ReadOnlyField label="Total ($)" value={total.toFixed(2)} emphasis />
+          <ReadOnlyField
+            label={isCreditMemo ? 'Total Credit ($)' : 'Total ($)'}
+            value={total.toFixed(2)}
+            emphasis
+          />
         </div>
       </Section>
 

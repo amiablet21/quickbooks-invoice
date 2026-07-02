@@ -9,7 +9,7 @@ Built with React + Vite + Tailwind, wrapped as a Windows desktop app with Electr
 ## Install the app (the easy way)
 
 1. Open the `release` folder.
-2. Run **`Invoice Studio Setup 1.0.1.exe`**.
+2. Run **`Invoice Studio Setup 1.1.0.exe`**.
 3. Follow the installer — it adds **Invoice Studio** to your Start menu and Desktop.
 4. Launch it like any other program.
 
@@ -29,6 +29,10 @@ isn't code-signed. Click **More info → Run anyway**.
   date. **Always review** the filled fields before saving — the first scan takes a few
   seconds while the recognizer warms up.
 - Fill in or correct the fields on the left; the document preview on the right updates live.
+- **Credit Memo** — open a saved invoice and click **Credit Memo** in the toolbar to
+  create a credit memo for it. It's pre-filled from the invoice, numbered `CM-…` to
+  match (e.g. `INV-483920` → `CM-483920`), and references the original invoice number.
+  Adjust the amount for partial credits, then save/print like any other document.
 - **Save** (or `Ctrl+S`) — stores the invoice locally. Saved invoices appear in the
   sidebar; click any to reopen it.
 - **Print / PDF** — opens the print dialog. Choose your printer, or pick

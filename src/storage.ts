@@ -30,7 +30,12 @@ export function loadInvoices(): InvoiceData[] {
     const parsed = JSON.parse(raw) as InvoiceData[];
     if (!Array.isArray(parsed)) return [];
     // Backfill fields added in later versions so totals never become NaN.
-    const normalized = parsed.map((i) => ({ ...i, tax: i.tax ?? 0 }));
+    const normalized = parsed.map((i) => ({
+      ...i,
+      tax: i.tax ?? 0,
+      docType: i.docType ?? 'invoice',
+      relatedInvoiceNumber: i.relatedInvoiceNumber ?? '',
+    }));
     return normalized.sort((a, b) => b.updatedAt - a.updatedAt);
   } catch {
     return [];
