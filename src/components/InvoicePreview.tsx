@@ -1,4 +1,5 @@
 import { InvoiceData, computeTotals } from '../types';
+import PackingSlipPreview from './PackingSlipPreview';
 
 interface InvoicePreviewProps {
   invoice: InvoiceData;
@@ -19,11 +20,14 @@ function MetaRow({ label, value }: { label: string; value: string }) {
 }
 
 export default function InvoicePreview({ invoice }: InvoicePreviewProps) {
+  if (invoice.docType === 'packing-slip') {
+    return <PackingSlipPreview invoice={invoice} />;
+  }
+
   const { amount, subtotal, total } = computeTotals(invoice);
   const isCreditMemo = invoice.docType === 'credit-memo';
-  const isPackingSlip = invoice.docType === 'packing-slip';
-  const docTitle = isCreditMemo ? 'CREDIT MEMO' : isPackingSlip ? 'PACKING SLIP' : 'INVOICE';
-  const longTitle = isCreditMemo || isPackingSlip;
+  const docTitle = isCreditMemo ? 'CREDIT MEMO' : 'INVOICE';
+  const longTitle = isCreditMemo;
 
   return (
     <div
@@ -57,17 +61,12 @@ export default function InvoicePreview({ invoice }: InvoicePreviewProps) {
             </h2>
             <div className="text-[13px] min-w-[200px] border-t border-stone-300 pt-3">
               <MetaRow
-                label={
-                  isCreditMemo ? 'Credit Memo #' : isPackingSlip ? 'Packing Slip #' : 'Invoice #'
-                }
+                label={isCreditMemo ? 'Credit Memo #' : 'Invoice #'}
                 value={invoice.invoiceNumber}
               />
               <MetaRow label="Date" value={invoice.invoiceDate} />
               {isCreditMemo && (
                 <MetaRow label="Original Invoice #" value={invoice.relatedInvoiceNumber} />
-              )}
-              {isPackingSlip && (
-                <MetaRow label="Invoice #" value={invoice.relatedInvoiceNumber} />
               )}
               <MetaRow label="PO #" value={invoice.poNumber} />
             </div>
@@ -123,8 +122,8 @@ export default function InvoicePreview({ invoice }: InvoicePreviewProps) {
               <th className="text-left font-semibold py-2 w-8">#</th>
               <th className="text-left font-semibold py-2">Description</th>
               <th className="text-right font-semibold py-2 w-16">Qty</th>
-              {!isPackingSlip && <th className="text-right font-semibold py-2 w-28">Rate</th>}
-              {!isPackingSlip && <th className="text-right font-semibold py-2 w-28">Amount</th>}
+              <th className="text-right font-semibold py-2 w-28">Rate</th>
+              <th className="text-right font-semibold py-2 w-28">Amount</th>
             </tr>
           </thead>
           <tbody>
@@ -134,18 +133,13 @@ export default function InvoicePreview({ invoice }: InvoicePreviewProps) {
                 {invoice.itemDescription || '—'}
               </td>
               <td className="py-3 text-right text-stone-800">{invoice.quantity}</td>
-              {!isPackingSlip && (
-                <td className="py-3 text-right text-stone-800">${money(invoice.unitPrice)}</td>
-              )}
-              {!isPackingSlip && (
-                <td className="py-3 text-right text-stone-900 font-medium">${money(amount)}</td>
-              )}
+              <td className="py-3 text-right text-stone-800">${money(invoice.unitPrice)}</td>
+              <td className="py-3 text-right text-stone-900 font-medium">${money(amount)}</td>
             </tr>
           </tbody>
         </table>
 
-        {/* Totals (invoices & credit memos only — a packing slip shows no prices) */}
-        {!isPackingSlip && (
+        {/* Totals */}
         <div className="flex justify-end mb-12">
           <div className="w-72 text-[13px]">
             <div className="flex justify-between py-2 border-b border-stone-200">
@@ -172,7 +166,6 @@ export default function InvoicePreview({ invoice }: InvoicePreviewProps) {
             </div>
           </div>
         </div>
-        )}
 
         {/* Footer */}
         {(invoice.terms || invoice.notes) && (

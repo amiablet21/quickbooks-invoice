@@ -2,6 +2,7 @@ import { Check, Star } from 'lucide-react';
 import { InvoiceData, computeTotals } from '../types';
 import { TextField, NumberField, TextAreaField, ReadOnlyField } from './Field';
 import ScreenshotImport from './ScreenshotImport';
+import PackingSlipEditor from './PackingSlipEditor';
 
 interface InvoiceEditorProps {
   invoice: InvoiceData;
@@ -36,10 +37,20 @@ export default function InvoiceEditor({
   onSaveVendorDefault,
   vendorSaved,
 }: InvoiceEditorProps) {
+  if (invoice.docType === 'packing-slip') {
+    return (
+      <PackingSlipEditor
+        invoice={invoice}
+        onChange={onChange}
+        onSaveVendorDefault={onSaveVendorDefault}
+        vendorSaved={vendorSaved}
+      />
+    );
+  }
+
   const { amount, total } = computeTotals(invoice);
   const isCreditMemo = invoice.docType === 'credit-memo';
-  const isPackingSlip = invoice.docType === 'packing-slip';
-  const docLabel = isCreditMemo ? 'Credit Memo' : isPackingSlip ? 'Packing Slip' : 'Invoice';
+  const docLabel = isCreditMemo ? 'Credit Memo' : 'Invoice';
 
   return (
     <div className="space-y-6">
@@ -53,7 +64,7 @@ export default function InvoiceEditor({
             onChange={(v) => onChange({ invoiceNumber: v })}
           />
           <TextField
-            label={isCreditMemo || isPackingSlip ? 'Date' : 'Invoice Date'}
+            label={isCreditMemo ? 'Date' : 'Invoice Date'}
             value={invoice.invoiceDate}
             onChange={(v) => onChange({ invoiceDate: v })}
             placeholder="MM/DD/YYYY"
@@ -61,13 +72,6 @@ export default function InvoiceEditor({
           {isCreditMemo && (
             <TextField
               label="Original Invoice #"
-              value={invoice.relatedInvoiceNumber}
-              onChange={(v) => onChange({ relatedInvoiceNumber: v })}
-            />
-          )}
-          {isPackingSlip && (
-            <TextField
-              label="Invoice #"
               value={invoice.relatedInvoiceNumber}
               onChange={(v) => onChange({ relatedInvoiceNumber: v })}
             />
@@ -170,15 +174,13 @@ export default function InvoiceEditor({
             value={invoice.quantity}
             onChange={(v) => onChange({ quantity: v })}
           />
-          {!isPackingSlip && (
-            <NumberField
-              label="Unit Price ($)"
-              value={invoice.unitPrice}
-              step="0.01"
-              onChange={(v) => onChange({ unitPrice: v })}
-            />
-          )}
-          {!isPackingSlip && <ReadOnlyField label="Amount ($)" value={amount.toFixed(2)} />}
+          <NumberField
+            label="Unit Price ($)"
+            value={invoice.unitPrice}
+            step="0.01"
+            onChange={(v) => onChange({ unitPrice: v })}
+          />
+          <ReadOnlyField label="Amount ($)" value={amount.toFixed(2)} />
         </div>
       </Section>
 
@@ -194,29 +196,23 @@ export default function InvoiceEditor({
             value={invoice.tracking}
             onChange={(v) => onChange({ tracking: v })}
           />
-          {!isPackingSlip && (
-            <NumberField
-              label="Shipping Cost ($)"
-              value={invoice.shipping}
-              step="0.01"
-              onChange={(v) => onChange({ shipping: v })}
-            />
-          )}
-          {!isPackingSlip && (
-            <NumberField
-              label="Tax & Fees ($)"
-              value={invoice.tax}
-              step="0.01"
-              onChange={(v) => onChange({ tax: v })}
-            />
-          )}
-          {!isPackingSlip && (
-            <ReadOnlyField
-              label={isCreditMemo ? 'Total Credit ($)' : 'Total ($)'}
-              value={total.toFixed(2)}
-              emphasis
-            />
-          )}
+          <NumberField
+            label="Shipping Cost ($)"
+            value={invoice.shipping}
+            step="0.01"
+            onChange={(v) => onChange({ shipping: v })}
+          />
+          <NumberField
+            label="Tax & Fees ($)"
+            value={invoice.tax}
+            step="0.01"
+            onChange={(v) => onChange({ tax: v })}
+          />
+          <ReadOnlyField
+            label={isCreditMemo ? 'Total Credit ($)' : 'Total ($)'}
+            value={total.toFixed(2)}
+            emphasis
+          />
         </div>
       </Section>
 

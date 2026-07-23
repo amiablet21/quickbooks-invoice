@@ -30,10 +30,27 @@ export interface InvoiceData {
   shipMethod: string;
   tracking: string;
 
+  // Packing slip (Amazon FBA inbound shipment) fields
+  shippingPlanId: string;
+  shipmentId: string;
+  shipToFc: string;
+  estDelivery: string;
+  shipmentStatus: string;
+  sku: string;
+  shippedUnits: number;
+  receivedUnits: number;
+  damagedUnits: number;
+  receivingStarted: string;
+
   terms: string;
   notes: string;
 
   updatedAt: number;
+}
+
+/** Received ÷ shipped, as a percentage (matches Amazon's "Fill rate"). */
+export function fillRate(inv: InvoiceData): number {
+  return inv.shippedUnits > 0 ? (inv.receivedUnits / inv.shippedUnits) * 100 : 0;
 }
 
 function todayFormatted(): string {
@@ -78,6 +95,17 @@ export function createBlankInvoice(): InvoiceData {
     shipMethod: '',
     tracking: '',
 
+    shippingPlanId: '',
+    shipmentId: '',
+    shipToFc: '',
+    estDelivery: '',
+    shipmentStatus: '',
+    sku: '',
+    shippedUnits: 0,
+    receivedUnits: 0,
+    damagedUnits: 0,
+    receivingStarted: '',
+
     terms: 'Payment is due upon receipt.',
     notes: 'Thank you for your business!',
 
@@ -121,8 +149,19 @@ export function createPackingSlip(source: InvoiceData): InvoiceData {
     invoiceNumber: packingSlipNumberFor(source.invoiceNumber),
     relatedInvoiceNumber: source.invoiceNumber,
     invoiceDate: todayFormatted(),
+    // Amazon-FBA fields start blank — filled from the seller shipment page.
+    shippingPlanId: '',
+    shipmentId: '',
+    shipToFc: '',
+    estDelivery: '',
+    shipmentStatus: '',
+    sku: '',
+    shippedUnits: 0,
+    receivedUnits: 0,
+    damagedUnits: 0,
+    receivingStarted: '',
     terms: '',
-    notes: 'Please retain this packing slip for your records.',
+    notes: '',
     updatedAt: Date.now(),
   };
 }

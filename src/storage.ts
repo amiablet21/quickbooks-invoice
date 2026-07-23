@@ -35,6 +35,16 @@ export function loadInvoices(): InvoiceData[] {
       tax: i.tax ?? 0,
       docType: i.docType ?? 'invoice',
       relatedInvoiceNumber: i.relatedInvoiceNumber ?? '',
+      shippingPlanId: i.shippingPlanId ?? '',
+      shipmentId: i.shipmentId ?? '',
+      shipToFc: i.shipToFc ?? '',
+      estDelivery: i.estDelivery ?? '',
+      shipmentStatus: i.shipmentStatus ?? '',
+      sku: i.sku ?? '',
+      shippedUnits: i.shippedUnits ?? 0,
+      receivedUnits: i.receivedUnits ?? 0,
+      damagedUnits: i.damagedUnits ?? 0,
+      receivingStarted: i.receivingStarted ?? '',
     }));
     return normalized.sort((a, b) => b.updatedAt - a.updatedAt);
   } catch {
