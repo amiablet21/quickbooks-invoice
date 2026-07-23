@@ -1,4 +1,4 @@
-export type DocType = 'invoice' | 'credit-memo';
+export type DocType = 'invoice' | 'credit-memo' | 'packing-slip';
 
 export interface InvoiceData {
   id: string;
@@ -101,6 +101,28 @@ export function createCreditMemo(source: InvoiceData): InvoiceData {
     invoiceDate: todayFormatted(),
     terms: 'Credit issued against the original invoice referenced above.',
     notes: '',
+    updatedAt: Date.now(),
+  };
+}
+
+/** Packing slip number derived from the invoice: INV-483920 → PS-483920. */
+export function packingSlipNumberFor(invoiceNumber: string): string {
+  const digits = invoiceNumber.replace(/\D/g, '');
+  return `PS-${digits || Math.floor(100000 + Math.random() * 900000)}`;
+}
+
+/** A packing slip carries the same shipment details as the invoice, but shows
+ *  no prices or totals — just what's in the box. */
+export function createPackingSlip(source: InvoiceData): InvoiceData {
+  return {
+    ...source,
+    id: generateId(),
+    docType: 'packing-slip',
+    invoiceNumber: packingSlipNumberFor(source.invoiceNumber),
+    relatedInvoiceNumber: source.invoiceNumber,
+    invoiceDate: todayFormatted(),
+    terms: '',
+    notes: 'Please retain this packing slip for your records.',
     updatedAt: Date.now(),
   };
 }

@@ -82,6 +82,11 @@ export default function Sidebar({
                       Credit
                     </span>
                   )}
+                  {inv.docType === 'packing-slip' && (
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-sky-700 bg-sky-50 border border-sky-200 rounded px-1 shrink-0">
+                      Slip
+                    </span>
+                  )}
                   {isActive && dirty && (
                     <span
                       title="Unsaved changes"
@@ -94,9 +99,11 @@ export default function Sidebar({
                 </div>
                 <div className="flex justify-between items-center mt-1">
                   <span className="text-xs text-stone-400">{relativeTime(inv.updatedAt)}</span>
-                  <span className="text-xs font-medium text-stone-600">
-                    ${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  </span>
+                  {inv.docType !== 'packing-slip' && (
+                    <span className="text-xs font-medium text-stone-600">
+                      ${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </span>
+                  )}
                 </div>
               </div>
               <button
