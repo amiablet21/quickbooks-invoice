@@ -4,12 +4,12 @@ A local desktop app for creating, saving, and printing invoices. Runs entirely o
 your computer — no account, no internet, no cloud. Your invoices are stored locally
 in the app.
 
-Built with React + Vite + Tailwind, wrapped as a Windows desktop app with Electron.
+Built with React + Vite + Tailwind, wrapped as a Windows and macOS desktop app with Electron.
 
-## Install the app (the easy way)
+## Install the app on Windows (the easy way)
 
 1. Open the `release` folder.
-2. Run **`Invoice Studio Setup 1.4.0.exe`**.
+2. Run **`Invoice Studio Setup 1.5.0.exe`**.
 3. Follow the installer — it adds **Invoice Studio** to your Start menu and Desktop.
 4. Launch it like any other program.
 
@@ -18,6 +18,21 @@ Built with React + Vite + Tailwind, wrapped as a Windows desktop app with Electr
 
 Windows may show a "Windows protected your PC" SmartScreen notice because the app
 isn't code-signed. Click **More info → Run anyway**.
+
+## Install the app on a Mac
+
+1. Go to the repo's **Releases** page on GitHub and open the latest
+   **Invoice Studio … for Mac** release.
+2. Download **`Invoice-Studio-1.5.0.dmg`** (one file for both Apple Silicon and Intel Macs).
+3. Open the DMG and drag **Invoice Studio** into **Applications**.
+4. First launch only: the app isn't notarized by Apple, so macOS blocks a plain
+   double-click. **Right-click the app → Open → Open.** On macOS 15 or later, try to
+   open it once, then go to **System Settings → Privacy & Security → Open Anyway**.
+
+The DMG is built automatically on a GitHub-hosted Mac by
+[`.github/workflows/build-mac.yml`](.github/workflows/build-mac.yml) on every push.
+You can also run it by hand from the **Actions** tab (**Build macOS DMG → Run workflow**).
+On a Mac, keyboard shortcuts use ⌘ instead of Ctrl (⌘S save, ⌘P print, ⌘V paste).
 
 ## Using it
 
@@ -55,6 +70,7 @@ npm run dev            # web dev server (browser) at http://localhost:5173
 npm run electron:dev   # run inside the Electron window with live reload
 npm run app            # build, then preview the production app in Electron
 npm run dist           # build + package the Windows installer into release/
+npm run dist:mac       # build + package the macOS .dmg into release/ (run on a Mac)
 ```
 
 `npm run typecheck` and `npm run lint` are also available.
@@ -67,4 +83,4 @@ npm run dist           # build + package the Windows installer into release/
   - `components/` — `Sidebar`, `InvoiceEditor`, `InvoicePreview`, `Field`
 - `electron/` — desktop shell (`main.cjs`, `preload.cjs`)
 - `dist/` — built web assets (generated)
-- `release/` — packaged Windows app + installer (generated)
+- `release/` — packaged Windows installer / macOS DMG (generated)

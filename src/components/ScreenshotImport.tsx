@@ -9,6 +9,8 @@ interface ScreenshotImportProps {
 
 type Status = 'idle' | 'reading' | 'done' | 'empty' | 'error';
 
+const PASTE_KEY = /Mac/i.test(navigator.platform) ? '⌘V' : 'Ctrl+V';
+
 export default function ScreenshotImport({ onApply }: ScreenshotImportProps) {
   const [status, setStatus] = useState<Status>('idle');
   const [filled, setFilled] = useState<string[]>([]);
@@ -132,7 +134,7 @@ export default function ScreenshotImport({ onApply }: ScreenshotImportProps) {
             <p className="text-xs text-stone-500 flex items-center gap-1">
               <Upload size={12} />
               {desktop
-                ? 'Click to choose, drag an image here, or paste (Ctrl+V)'
+                ? `Click to choose, drag an image here, or paste (${PASTE_KEY})`
                 : 'Available in the desktop app'}
             </p>
           </div>

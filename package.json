@@ -1,7 +1,7 @@
 {
   "name": "invoice-studio",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.5.0",
   "type": "module",
   "main": "electron/main.cjs",
   "description": "A local desktop app for creating, saving, and printing invoices.",
@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "electron:dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && cross-env ELECTRON_START_URL=http://localhost:5173 electron .\"",
     "app": "npm run build && electron .",
-    "dist": "npm run build && electron-builder --win"
+    "dist": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac"
   },
   "dependencies": {
     "lucide-react": "^0.344.0",
@@ -84,6 +85,25 @@
       "installerSidebar": "build/installerSidebar.bmp",
       "uninstallerSidebar": "build/installerSidebar.bmp",
       "uninstallDisplayName": "Invoice Studio"
+    },
+    "mac": {
+      "icon": "build/icon.png",
+      "category": "public.app-category.business",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ]
+    },
+    "dmg": {
+      "title": "Invoice Studio ${version}",
+      "artifactName": "Invoice-Studio-${version}.dmg"
     }
   }
 }

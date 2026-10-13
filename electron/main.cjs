@@ -13,7 +13,7 @@ function createWindow() {
     minHeight: 600,
     backgroundColor: '#f5f5f4',
     title: 'Invoice Studio',
-    icon: path.join(__dirname, 'icon.ico'),
+    icon: path.join(__dirname, 'icon.ico'), // Windows/Linux; macOS uses the bundle icon
     autoHideMenuBar: true,
     show: false, // avoid a white flash; reveal once ready
     webPreferences: {
@@ -140,12 +140,15 @@ ipcMain.handle('ocr:scan', async (_event, dataUrl) => {
 });
 
 app.whenReady().then(() => {
-  // Minimal native menu; Print stays available via Ctrl+P inside the app.
+  // Minimal native menu; Print stays available via Ctrl/Cmd+P inside the app.
+  // On macOS the first menu is the app menu (About, Hide, Quit ⌘Q, ...).
+  const isMac = process.platform === 'darwin';
   Menu.setApplicationMenu(
     Menu.buildFromTemplate([
+      ...(isMac ? [{ role: 'appMenu' }] : []),
       {
         label: 'File',
-        submenu: [{ role: 'quit' }],
+        submenu: [isMac ? { role: 'close' } : { role: 'quit' }],
       },
       {
         label: 'Edit',
