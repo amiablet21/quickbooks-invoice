@@ -28,7 +28,7 @@ jobs:
       - name: Build DMG
         run: npm run dist:mac
         env:
-          # No Apple Developer certificate: ad-hoc sign only (see package.json mac.identity).
+          # No Apple Developer certificate: build/adhoc-sign.cjs ad-hoc signs the app instead.
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
       - name: Read version

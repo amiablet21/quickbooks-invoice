@@ -15,7 +15,7 @@
     "electron:dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && cross-env ELECTRON_START_URL=http://localhost:5173 electron .\"",
     "app": "npm run build && electron .",
     "dist": "npm run build && electron-builder --win",
-    "dist:mac": "npm run build && electron-builder --mac"
+    "dist:mac": "npm run build && electron-builder --mac --publish never"
   },
   "dependencies": {
     "lucide-react": "^0.344.0",
@@ -89,7 +89,7 @@
     "mac": {
       "icon": "build/icon.png",
       "category": "public.app-category.business",
-      "identity": "-",
+      "identity": null,
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
       "target": [
@@ -104,6 +104,7 @@
     "dmg": {
       "title": "Invoice Studio ${version}",
       "artifactName": "Invoice-Studio-${version}.dmg"
-    }
+    },
+    "afterPack": "build/adhoc-sign.cjs"
   }
 }
